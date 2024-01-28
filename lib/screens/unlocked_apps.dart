@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:app_lock_flutter/executables/controllers/method_channel_controller.dart';
@@ -10,21 +11,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_switch/flutter_switch.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
-import 'package:lottie/lottie.dart';
 
 import '../executables/controllers/apps_controller.dart';
 import '../executables/controllers/password_controller.dart';
+import '../models/child_app_model.dart';
 import '../services/constant.dart';
 import '../widgets/pass_confirm_dialog.dart';
 
-class UnlockedAppScreen extends StatelessWidget {
+class UnlockedAppScreen extends StatefulWidget {
   const UnlockedAppScreen({Key? key}) : super(key: key);
 
   @override
+  State<UnlockedAppScreen> createState() => _UnlockedAppScreenState();
+}
+
+class _UnlockedAppScreenState extends State<UnlockedAppScreen> {
+  List<ChildAppModel> childAppList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    getLocalAppListLength();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var collection = FirebaseFirestore.instance.collection('child_table');
-    var lockLists = getLockListFromFirebase();
-    Size size = MediaQuery.of(context).size;
     return WillPopScope(
       onWillPop: () async {
         return false;
@@ -153,216 +164,25 @@ class UnlockedAppScreen extends StatelessWidget {
         ),
         body: Stack(
           children: [
-            SizedBox(
-              height: double.infinity,
-              width: size.width,
-              child: GetBuilder<AppsController>(
-                builder: (appsController) {
-                  if (appsController.unLockList.isEmpty) {
-                    return Center(
-                      child: Container(
-                        color: Colors.transparent,
-                        height: 300,
-                        child: Column(
-                          children: [
-                            Lottie.asset(
-                              "assets/jsonFiles/102600-pink-no-data.json",
-                              width: 200,
-                            ),
-                            Text(
-                              "Loading...",
-                              style: MyFont().subtitle(
-                                color: Theme.of(context).primaryColor,
-                                fontweight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+            StreamBuilder(
+                stream: _getAppsListStream(),
+                builder: (BuildContext context,
+                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (getLocalAppListLength() != childAppList.length + 1) {
+                    debugPrint(
+                        "Add new appList"); //reason install and uninstall app
+                    addAppList();
+                  }
+                  debugPrint(
+                      "Same appList${getLocalAppListLength()}////${childAppList.length + 1}");
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
                     );
                   }
-                  var appList = appsController.unLockList.map((e) {
-                    if (e is ApplicationWithIcon) {
-                      var i = e.icon;
-                      return {
-                        'appName': e.appName,
-                        "version": e.versionName,
-                        'enable': '0',
-                        'packageName': e.packageName,
-                        'apkFilePath': e.apkFilePath,
-                        "appIcon": e.icon.toString()
-                      } as Map<String, String?>;
-                    } else {
-                      return {
-                        'appName': e.appName,
-                        "version": e.versionName,
-                        'packageName': e.packageName,
-                        'apkFilePath': e.apkFilePath,
-                        'enable': '0',
-                      };
-                    }
-                  }).toList();
-                  var collection =
-                      FirebaseFirestore.instance.collection('child_table');
-                  // `appList.forEach((element) {
-                  //   collection
-                  //       .doc(Get.find<AppsController>().getChildId())
-                  //       .collection('applist')
-                  //       .doc(element['appName'])
-                  //       .set(element) // <-- Add data
-                  //       .then((_) => print(' Added'))
-                  //       .catchError((error) => print('Add failed: $error'));
-                  // });`
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      return await appsController.getAppsData();
-                    },
-                    child: ListView.builder(
-                      padding: EdgeInsets.zero,
-                      itemCount: appsController.unLockList.length,
-                      itemBuilder: (context, index) {
-                        Application app = appsController.unLockList[index];
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Theme.of(context).primaryColorDark,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(5),
-                                  margin: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                    horizontal: 14,
-                                  ),
-                                  height: 50,
-                                  width: 50,
-                                  decoration: BoxDecoration(
-                                    // color: Theme.of(context).primaryColorDark,
-                                    borderRadius: BorderRadius.circular(10),
-                                    // ignore: prefer_const_literals_to_create_immutables
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.25),
-                                        blurRadius: 20.0,
-                                        offset: const Offset(5, 5),
-                                      ),
-                                    ],
-                                  ),
-                                  child: app is ApplicationWithIcon
-                                      ? CircleAvatar(
-                                          backgroundImage:
-                                              MemoryImage(app.icon),
-                                          backgroundColor: Theme.of(context)
-                                              .primaryColorDark,
-                                        )
-                                      : CircleAvatar(
-                                          backgroundColor: Theme.of(context)
-                                              .primaryColorDark,
-                                          child: Text(
-                                            "Error",
-                                            style: MyFont().subtitle(
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        app.appName,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyText1!
-                                            .copyWith(color: Colors.white),
-                                      ),
-                                      Text(
-                                        "${app.versionName}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle1!
-                                            .copyWith(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                  ),
-                                  child: FlutterSwitch(
-                                    width: 50.0,
-                                    height: 25.0,
-                                    valueFontSize: 25.0,
-                                    toggleColor: Colors.white,
-                                    activeColor: Theme.of(context).primaryColor,
-                                    inactiveColor:
-                                        Theme.of(context).primaryColorDark,
-                                    toggleSize: 20.0,
-                                    value: lockLists.contains(app.appName),
-                                    borderRadius: 30.0,
-                                    padding: 2.0,
-                                    showOnOff: false,
-                                    onToggle: (val) {
-                                      if ("${Get.find<AppsController>().getPasscode()}" !=
-                                          "") {
-                                        // collection
-                                        //     .doc(Get.find<AppsController>()
-                                        //         .getChildId())
-                                        //     .collection('applist')
-                                        //     .where('appName',
-                                        //         isEqualTo: app.appName)
-                                        //     .get()
-                                        //     .then((querySnapshot) {
-                                        //   print('answer: success');
-                                        //   querySnapshot.docs.forEach((doc) {
-                                        //     doc.reference.update({
-                                        //       'enable': !appsController
-                                        //               .selectLockList
-                                        //               .contains(app.appName)
-                                        //           ? "0"
-                                        //           : "1"
-                                        //     });
-                                        //   });
-                                        // });
-                                        // appsController.addToLockedApps(
-                                        //   app,
-                                        //   context,
-                                        // );
-                                      } else {
-                                        Fluttertoast.showToast(
-                                            msg: "Set password");
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
+                  return appListWidget(snapshot, context);
+                }),
             GetBuilder<AppsController>(
                 id: Get.find<AppsController>().addRemoveToUnlockUpdate,
                 builder: (state) {
@@ -382,24 +202,236 @@ class UnlockedAppScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget appListWidget(
+      AsyncSnapshot<QuerySnapshot> snapshot, BuildContext context) {
+    childAppList.clear();
+    snapshot.data!.docs.forEach((f) {
+      //print(f["appName"]);
+      childAppList.add(ChildAppModel(
+          appName: f['appName'],
+          version: f['version'],
+          appIcon: f['appIcon'],
+          packageName: f['packageName'],
+          enable: f['enable']));
+    });
+
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: childAppList.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 5,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Theme.of(context).primaryColorDark,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 14,
+                  ),
+                  height: 50,
+                  width: 50,
+                  decoration: BoxDecoration(
+                    // color: Theme.of(context).primaryColorDark,
+                    borderRadius: BorderRadius.circular(10),
+                    // ignore: prefer_const_literals_to_create_immutables
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 20.0,
+                        offset: const Offset(5, 5),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    backgroundImage: MemoryImage(_convertListToInt(
+                        childAppList[index].appIcon.toString())),
+                    backgroundColor: Theme.of(context).primaryColorDark,
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        childAppList[index].appName.toString(),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyText1!
+                            .copyWith(color: Colors.white),
+                      ),
+                      Text(
+                        childAppList[index].version.toString(),
+                        style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                  ),
+                  child: FlutterSwitch(
+                    width: 50.0,
+                    height: 25.0,
+                    valueFontSize: 25.0,
+                    toggleColor: Colors.white,
+                    activeColor: Theme.of(context).primaryColor,
+                    inactiveColor: Theme.of(context).primaryColorDark,
+                    toggleSize: 20.0,
+                    value: childAppList[index].enable == "1",
+                    borderRadius: 30.0,
+                    padding: 2.0,
+                    showOnOff: false,
+                    onToggle: (val) {
+                      if ("${Get.find<AppsController>().getPasscode()}" != "") {
+                        // collection
+                        //     .doc(Get.find<AppsController>()
+                        //         .getChildId())
+                        //     .collection('applist')
+                        //     .where('appName',
+                        //         isEqualTo: app.appName)
+                        //     .get()
+                        //     .then((querySnapshot) {
+                        //   print('answer: success');
+                        //   querySnapshot.docs.forEach((doc) {
+                        //     doc.reference.update({
+                        //       'enable': !appsController
+                        //               .selectLockList
+                        //               .contains(app.appName)
+                        //           ? "0"
+                        //           : "1"
+                        //     });
+                        //   });
+                        // });
+                        // appsController.addToLockedApps(
+                        //   app,
+                        //   context,
+                        // );
+                      } else {
+                        Fluttertoast.showToast(msg: "Set password");
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  int getLocalAppListLength() {
+    var appList = Get.find<AppsController>().unLockList.map((e) {
+      if (e is ApplicationWithIcon) {
+        var i = e.icon;
+        return {
+          'appName': e.appName,
+          "version": e.versionName,
+          'enable': '0',
+          'packageName': e.packageName,
+          'apkFilePath': e.apkFilePath,
+          "appIcon": e.icon.toString()
+        } as Map<String, String?>;
+      } else {
+        return {
+          'appName': e.appName,
+          "version": e.versionName,
+          'packageName': e.packageName,
+          'apkFilePath': e.apkFilePath,
+          'enable': '0',
+        };
+      }
+    }).toList();
+    return appList.length;
+  }
+
+  void addAppList() {
+    var appList = Get.find<AppsController>().unLockList.map((e) {
+      if (e is ApplicationWithIcon) {
+        var i = e.icon;
+        return {
+          'appName': e.appName,
+          "version": e.versionName,
+          'enable': '0',
+          'packageName': e.packageName,
+          'apkFilePath': e.apkFilePath,
+          "appIcon": e.icon.toString()
+        } as Map<String, String?>;
+      } else {
+        return {
+          'appName': e.appName,
+          "version": e.versionName,
+          'packageName': e.packageName,
+          'apkFilePath': e.apkFilePath,
+          'enable': '0',
+        };
+      }
+    }).toList();
+    var collection = FirebaseFirestore.instance.collection('child_table');
+    appList.forEach((element) {
+      collection
+          .doc(Get.find<AppsController>().getChildId())
+          .collection('applist')
+          .doc(element['appName'])
+          .set(element) // <-- Add data
+          .then((_) => print(' Added'))
+          .catchError((error) => print('Add failed: $error'));
+    });
+  }
 }
 
-List<String> getLockListFromFirebase() {
-  List<String> lockList = [];
-  var collection = FirebaseFirestore.instance.collection('child_table');
-  collection
+Uint8List _convertListToInt(String input) {
+  final reg = RegExp(r"([0-9]+|\d+)");
+  final pieces = reg.allMatches(input);
+  final result = pieces.map((e) => int.parse(e.group(0).toString())).toList();
+
+  List<int> example = result;
+
+  return Uint8List.fromList(example);
+}
+
+Stream<QuerySnapshot> _getAppsListStream() {
+  return FirebaseFirestore.instance
+      .collection('child_table')
       .doc(Get.find<AppsController>().getChildId())
       .collection('applist')
-      .where('enable', isEqualTo: "1")
-      .get()
-      .then((querySnapshot) {
-    querySnapshot.docs.forEach((doc) {
-      lockList.add(doc['appName']);
-    });
-    print('answer:' + lockList.length.toString());
-  });
-  return lockList;
+      .snapshots();
 }
+
+// List<String> getLockListFromFirebase() {
+//   List<String> lockList = [];
+//   var collection = FirebaseFirestore.instance.collection('child_table');
+//   collection
+//       .doc(Get.find<AppsController>().getChildId())
+//       .collection('applist')
+//       .where('enable', isEqualTo: "1")
+//       .get()
+//       .then((querySnapshot) {
+//     querySnapshot.docs.forEach((doc) {
+//       lockList.add(doc['appName']);
+//     });
+//     print('answer:' + lockList.length.toString());
+//   });
+//   return lockList;
+// }
 
 // GetBuilder<AppsController>(
 // id: Get.find<AppsController>()

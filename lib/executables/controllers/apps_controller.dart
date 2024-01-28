@@ -108,7 +108,7 @@ class AppsController extends GetxController implements GetxService {
     update();
   }
 
-  addRemoveFromLockedAppsFromSearch(ApplicationData app) {
+  addRemoveFromLockedAppsFromSearch(ApplicationData app, String flat) {
     addToAppsLoading = true;
     update();
     try {
@@ -150,16 +150,15 @@ class AppsController extends GetxController implements GetxService {
     update();
   }
 
-  addToLockedApps(Application app) async {
-    log("REMOVEAAAAAAAa: ${app.appName}");
+  addToLockedApps(Application app, String flat) async {
     addToAppsLoading = true;
     update([addRemoveToUnlockUpdate]);
     try {
-      if (selectLockList.contains(app.appName)) {
+      if (flat == 'Enable') {
         log(selectLockList.toString());
         selectLockList.remove(app.appName);
         lockList.removeWhere((em) => em.application!.appName == app.appName);
-        log("REMOVEList: $selectLockList");
+        log("REMOVE Items from Lost list: $selectLockList$lockList");
       } else {
         if (lockList.length < 16) {
           selectLockList.add(app.appName);

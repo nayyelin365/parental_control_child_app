@@ -119,17 +119,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               "firebase_token":
                                   Get.find<AppsController>().getFirebaseToken()
                             });
-                            Fluttertoast.showToast(msg: childId.toString());
 
                             Get.find<AppsController>().saveChildId(childId);
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const HomePage(),
+                              ),
+                            );
                           });
                           Fluttertoast.showToast(msg: "success");
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HomePage(),
-                            ),
-                          );
                         }
                       });
                     },

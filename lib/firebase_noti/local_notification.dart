@@ -18,8 +18,7 @@ final StreamController<ReceivedNotification> didReceiveLocalNotificationStream =
 final StreamController<String?> selectNotificationStream =
     StreamController<String?>.broadcast();
 
-const MethodChannel platform =
-    MethodChannel('dexterx.dev/flutter_local_notifications_example');
+const MethodChannel platform = MethodChannel('flutter.native/helper');
 
 const String portName = 'notification_send_port';
 

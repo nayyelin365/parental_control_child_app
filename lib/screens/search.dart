@@ -208,9 +208,9 @@ class _SearchPageState extends State<SearchPage> {
                                             "") {
                                           state
                                               .addRemoveFromLockedAppsFromSearch(
-                                            state.searchedApps[index]
-                                                .application!,
-                                          );
+                                                  state.searchedApps[index]
+                                                      .application!,
+                                                  "Enable");
                                         } else {
                                           Fluttertoast.showToast(
                                               msg: "Set password");

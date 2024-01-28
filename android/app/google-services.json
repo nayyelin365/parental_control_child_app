@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1020012488945",
+    "project_id": "parental-control-app-55894",
+    "storage_bucket": "parental-control-app-55894.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1020012488945:android:361be6813ca7f2aab8a150",
+        "android_client_info": {
+          "package_name": "com.nayyelin.parental.clientapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2cGWErwW6l53BvR951N9BpCQuUAeS5zg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

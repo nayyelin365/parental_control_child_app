@@ -135,7 +135,9 @@ class _UnlockedAppScreenState extends State<UnlockedAppScreen> {
             ),
             InkWell(
                 onTap: () {
-                  Get.find<AppsController>().resetAll();
+                  // Fluttertoast.showToast(
+                  //     msg: Get.find<AppsController>().getFirebaseToken());
+                  Get.find<AppsController>().saveChildId("");
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -182,13 +184,11 @@ class _UnlockedAppScreenState extends State<UnlockedAppScreen> {
                 stream: _getAppsListStream(),
                 builder: (BuildContext context,
                     AsyncSnapshot<QuerySnapshot> snapshot) {
-                  if (getLocalAppListLength() != childAppList.length) {
+                  if (childAppList.isEmpty) {
                     debugPrint(
                         "Add new appList"); //reason install and uninstall app
                     addAppList();
                   }
-                  debugPrint(
-                      "Same appList${getLocalAppListLength()}////${childAppList.length}");
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(

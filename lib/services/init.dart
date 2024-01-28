@@ -1,6 +1,6 @@
+import 'package:app_lock_flutter/executables/controllers/apps_controller.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:app_lock_flutter/executables/controllers/apps_controller.dart';
 
 import '../executables/controllers/home_screen_controller.dart';
 import '../executables/controllers/method_channel_controller.dart';

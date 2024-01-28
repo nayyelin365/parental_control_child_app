@@ -14,10 +14,19 @@ import 'local_notification.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
   print('Message data: ${message.data}');
-  //await initialize();
   Application? app = await DeviceApps.getApp(message.data['packageName'] ?? "");
   Get.find<AppsController>()
       .addToLockedApps(app!, message.data['body'] ?? "Enable");
+  WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+    Get.find<AppsController>().getAppsData();
+    Get.find<AppsController>().getLockedApps();
+    Get.find<MethodChannelController>().addToLockedAppsMethod();
+  });
+
+  showNotification(
+      message.data['title'] ?? message.notification?.title.toString(),
+      message.data['body'] ?? message.notification?.body.toString(),
+      message.data['packageName'] ?? "");
 }
 
 late AndroidNotificationChannel channel;
@@ -105,5 +114,5 @@ getToken() async {
   //   StorageUtils.putString("fcmToken", token.toString());
   // });
   Get.find<AppsController>().saveFirebaseToken(token.toString());
-  print("Registration Token:" + token.toString());
+  print("Registration Token:$token");
 }

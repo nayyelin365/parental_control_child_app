@@ -2,8 +2,8 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:app_lock_flutter/executables/controllers/method_channel_controller.dart';
-import 'package:app_lock_flutter/screens/search.dart';
 import 'package:app_lock_flutter/screens/set_passcode.dart';
+import 'package:app_lock_flutter/screens/splash.dart';
 import 'package:app_lock_flutter/widgets/confirmation_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_apps/device_apps.dart';
@@ -133,33 +133,47 @@ class _UnlockedAppScreenState extends State<UnlockedAppScreen> {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Theme.of(context).primaryColorDark,
-                  ),
-                ),
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (BuildContext context) {
-                          return const SearchPage();
-                        },
-                      ),
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.search,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+            InkWell(
+                onTap: () {
+                  Get.find<AppsController>().resetAll();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SplashPage(),
+                    ),
+                  );
+                },
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(Icons.logout),
+                ))
+            // Padding(
+            //   padding: const EdgeInsets.all(6.0),
+            //   child: Container(
+            //     decoration: BoxDecoration(
+            //       borderRadius: BorderRadius.circular(10),
+            //       border: Border.all(
+            //         color: Theme.of(context).primaryColorDark,
+            //       ),
+            //     ),
+            //     child: IconButton(
+            //       onPressed: () {
+            //         Navigator.push(
+            //           context,
+            //           MaterialPageRoute(
+            //             builder: (BuildContext context) {
+            //               return const SearchPage();
+            //             },
+            //           ),
+            //         );
+            //       },
+            //       icon: const Icon(
+            //         Icons.search,
+            //         color: Colors.white,
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
         body: Stack(
@@ -168,13 +182,13 @@ class _UnlockedAppScreenState extends State<UnlockedAppScreen> {
                 stream: _getAppsListStream(),
                 builder: (BuildContext context,
                     AsyncSnapshot<QuerySnapshot> snapshot) {
-                  if (getLocalAppListLength() != childAppList.length + 1) {
+                  if (getLocalAppListLength() != childAppList.length) {
                     debugPrint(
                         "Add new appList"); //reason install and uninstall app
                     addAppList();
                   }
                   debugPrint(
-                      "Same appList${getLocalAppListLength()}////${childAppList.length + 1}");
+                      "Same appList${getLocalAppListLength()}////${childAppList.length}");
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(

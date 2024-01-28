@@ -43,6 +43,10 @@ class AppsController extends GetxController implements GetxService {
     checkAnswer.clear();
   }
 
+  resetAll() {
+    prefs.clear();
+  }
+
   savePasscode(counter) {
     prefs.setString(AppConstants.setPassCode, counter);
     Get.find<MethodChannelController>().setPassword();
